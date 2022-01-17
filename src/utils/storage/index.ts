@@ -15,7 +15,7 @@ export function setLocalStorage<T>(key: string, value: T, isEnableValid: boolean
     data.expire = currentTime + (typeof expire === 'number' ? expire : DEFAULT_EXPIRE_TIMEOUT)
   }
   // 存储
-  localStorage.setItem(key, JSON.stringify(data))
+  window.localStorage.setItem(key, JSON.stringify(data))
 }
 
 /**
@@ -25,7 +25,7 @@ export function setLocalStorage<T>(key: string, value: T, isEnableValid: boolean
  * @param isEnableValid - 是否开启有效期校验
  */
 export function getLocalStorage<T = any, K = null>(key: string, failVal: K, isEnableValid: boolean = false) {
-  const data = localStorage.getItem(key)
+  const data = window.localStorage.getItem(key)
   if (!data) return failVal
 
   const { expire, value } = JSON.parse(data) as LocalStorageData<T>
@@ -40,4 +40,13 @@ export function getLocalStorage<T = any, K = null>(key: string, failVal: K, isEn
 interface LocalStorageData<T> {
   value: T;
   expire?:  number;
+}
+
+/**
+ * @description 移除localStorage
+ * @param key - localStorageKey
+ */
+export function removeLocalStorage(key: string) {
+  window.localStorage.removeItem(key)
+  return true
 }

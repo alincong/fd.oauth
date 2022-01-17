@@ -7,16 +7,16 @@
       label-width="120px"
       class="demo-ruleForm"
     >
-      <el-form-item label="新密码: " prop="pwd">
+      <el-form-item label="新密码: " prop="newPassword">
         <el-input
-          v-model="formData.pwd"
+          v-model="formData.newPassword"
           placeholder="请输入"
           style="width: 60%"
         ></el-input>
       </el-form-item>
-      <el-form-item label="确认密码: " prop="pwds">
+      <el-form-item label="确认密码: " prop="password">
         <el-input
-          v-model="formData.pwds"
+          v-model="formData.password"
           placeholder="请输入"
           style="width: 60%"
         ></el-input>
@@ -33,53 +33,69 @@
 
 <script lang="ts">
 import { defineComponent, ref, reactive } from "vue";
+import { revisePwd } from "@/api/user-manage-api";
+
 export default defineComponent({
   setup() {
-    const formRef = ref()
-   
+    const formRef = ref();
+
     // 弹窗功能
     const dialogVisible = ref(false);
-    const showDialog = () => {
+    const userId = ref()
+    const showDialog = (id) => {
+      userId.value = id
       dialogVisible.value = true;
-      formRef.value && formRef.value.resetFields()
+      formRef.value && formRef.value.resetFields();
     };
 
     // 两次密码认证，必须定义在formRules前才不会报错
-    const validatePass = (rule, value, callback) => {
-      if (formData.pwds !== formData.pwd) {
-        callback(new Error('两次密码需要一致'))
+    const validatePwd = (rule, value, callback) => {
+      if (formData.password !== formData.newPassword) {
+        callback(new Error("两次密码需要一致"));
       }
-      callback()
-    }
+      callback();
+    };
+    const pwdLength = (rule, value, callback) => {
+      if (formData.newPassword.length < 6 || formData.newPassword.length > 16) {
+        callback(new Error("密码长度为6-16"));
+      }
+      callback();
+    };
 
     // 表单数据
-    const formData = reactive({pwd: '', pwds: ''});
+    const formData = reactive({ newPassword: "", password: "" });
     const formRules = reactive({
-      pwd: [
+      newPassword: [
         {
           required: true,
           message: "请输入密码",
           trigger: "blur",
         },
+        { validator: pwdLength, trigger: "blur" },
       ],
-      pwds: [
+      password: [
         {
           required: true,
           message: "请输入密码",
           trigger: "blur",
         },
-        { validator: validatePass, trigger: 'blur' }
+        { validator: validatePwd, trigger: "blur" },
       ],
     });
 
     // 提交
     const submitForm = () => {
-      formRef.value.validate((vaild) => {
-        if(!vaild) return;
-
-        console.log(formData)
-      })
-    }
+      formRef.value.validate(async(vaild) => {
+        if (!vaild) return;
+        try {
+          let params = JSON.parse(JSON.stringify(formData))
+          delete params.newPassword
+          console.log(params);
+          const res = await revisePwd(userId.value, params).request()
+          dialogVisible.value = false;
+        } catch(err) {}
+      });
+    };
 
     return {
       formRef,
@@ -89,7 +105,7 @@ export default defineComponent({
 
       // 方法
       showDialog,
-      submitForm
+      submitForm,
     };
   },
 });

@@ -1,15 +1,14 @@
 import { ServerOptions } from 'vite'
 
-
-export function createServer(env: Record<string, any>, isBuild: boolean) {
+export function createServer(env: Record<string, any>) {
   return {
-    port: 8080,
+    port: 3000,
     open: true,
     cors: true,
     proxy: {
       '/api': {
         target: env.VITE_APP_API_BASEURL,
-        changeOrigin: !isBuild && env.VITE_OPEN_PROXY,
+        changeOrigin: env.VITE_OPEN_PROXY,
         rewrite: path => path.replace(/^\/api/, '')
       }
     }

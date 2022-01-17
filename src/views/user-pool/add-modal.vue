@@ -18,18 +18,21 @@
 <script lang="ts">
 import { defineComponent, reactive, ref } from 'vue'
 import type { UnwrapRef } from 'vue';
+import { ElMessage } from 'element-plus'
+import { postUserPoolApi } from '@/api/user-pool';
 
 interface FormState {
   name: string;
 }
 
 export default defineComponent({
-  setup() {
+  setup(props, {emit}) {
     // 弹窗开关
     let dialogFormVisible = ref<boolean>(false)
     // 打开弹窗
     const showModal = () => {
       dialogFormVisible.value = true
+      loading.value = false
       form.name = ''
     }
 
@@ -53,11 +56,25 @@ export default defineComponent({
     // 确认
     let loading = ref<boolean>(false)
     const handleCommit = () => {
-      loading.value = true
-      setTimeout(() => {
-        loading.value = false;
-        handleCancel()
-      }, 2000);
+      ruleForm.value.validate()
+        .then(async () => {
+          try {
+            loading.value = true
+            const res = await postUserPoolApi(form).request()
+            console.log(res);
+            loading.value = false
+            handleCancel()
+            emit('getUserPoolList')
+          } catch (error) {
+            loading.value = false
+          }
+        })
+        .catch(error => {
+          ElMessage({
+            message: '请输入用户池名称！',
+            type: 'warning',
+          })
+				});
     }
 
     return {

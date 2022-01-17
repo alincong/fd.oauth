@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig, Canceler, AxiosResponse, AxiosError } from '
 import { getLocalStorage } from '../../utils/storage'
 import { addPending, removePending } from './cancel'
 import defaultOptions, { Options } from './default-options'
-import { errorNotice, successNotice, errorCodeNotice, httpErrorCode } from './notificationer'
+import { errorNotice, successNotice, errorCodeNotice, httpErrorCode, systemErrorNotice } from './notificationer'
 
 /**
  * @description 请求函数
@@ -10,7 +10,7 @@ import { errorNotice, successNotice, errorCodeNotice, httpErrorCode } from './no
  * @param options - 额外配置项
  * @returns request/调用请求方法, cancel/取消请求方法
  */
-function fetch(baseConfig: AxiosRequestConfig, options: Options = {}) {
+function fetch<T = any>(baseConfig: AxiosRequestConfig, options: Options = {}) {
   options = { ...defaultOptions, ...options }
 
   // 取消请求函数
@@ -33,7 +33,7 @@ function fetch(baseConfig: AxiosRequestConfig, options: Options = {}) {
       // 获取token，如果存在带上请求头
       const token = getLocalStorage('token', null)
       if (token) {
-        config.headers.Authorization = `Bear ${token}`
+        config.headers.Authorization = `${token}`
       }
       // 开启取消重复请求
       options?.cancelRepeat && addPending(baseConfig, cancelToken)
@@ -56,24 +56,23 @@ function fetch(baseConfig: AxiosRequestConfig, options: Options = {}) {
    * @description 请求函数
    */
   const request = () => {
-    return new Promise((resolve, reject) => {
+    return new Promise<T>((resolve, reject) => {
       instace(baseConfig)
         .then((res: AxiosResponse<ResponseData>) => {
           const { data } = res
           if (data.code === 0) {
             // 是否开启消息提示
-            options?.showNotice && successNotice(options.successMessage || data.message)
-            resolve(options?.cacheCode ? data.data : data)
+            options?.showNotice && successNotice(options.successMessage || data.msg)
+            return resolve(options?.cacheCode ? data.data: data)
           }
           // 状态不为成功
-          options?.showNotice && errorNotice(options.errorMessage || data.message)
-          reject(new Error(data.message))
+          systemErrorNotice(data.code, data.msg) && reject(new Error(data.msg))
         })
         .catch((err: AxiosError<ResponseData>) => {
           const errCode = err.response?.status.toString() as string
           Object.keys(httpErrorCode).includes(errCode) ?
             errorCodeNotice(errCode) :
-            options?.showNotice && errorNotice(options?.errorMessage || err.response?.data.message)
+            options?.showNotice && errorNotice(options?.errorMessage || err.response?.data.msg)
           reject(err)
         })
     })
@@ -98,5 +97,6 @@ interface ResponseData {
   code: number;
   data: any;
   message: string;
+  msg: string;
   status: boolean;
 }

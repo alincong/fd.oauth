@@ -13,15 +13,15 @@
         </el-card>
       </el-col>
 
-      <el-col :span="6" v-for="index of 5" :key="index">
-        <el-card class="user-pool-item" @click="toApplication">
+      <el-col :span="6" v-for="item in list" :key="item.id">
+        <el-card class="user-pool-item" @click="toApplication(item.id)">
           <div class="user-pool-item-logo">
             <img src="@/assets/logo.png" alt="凡岛logo">
           </div>
           <div class="user-pool-item-info">
-            <div class="info-title">Fandow</div>
+            <div class="info-title">{{ item.name }}</div>
             <div class="user-icon-box">
-              <div class="user-icon-item" v-for="index of 3" :key="index">
+              <div class="user-icon-item" v-for="index of  3" :key="index">
                 <el-icon class="user-icon"><UserFilled /></el-icon>
               </div>
             </div>
@@ -32,14 +32,20 @@
     </el-row>
 
     <!-- 新增用户池 -->
-    <add-modal ref="addModalRef"></add-modal>
+    <add-modal ref="addModalRef" @getUserPoolList="getUserPoolList"></add-modal>
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router';
 import { Plus, Menu, UserFilled } from '@element-plus/icons-vue'
 import AddModal from './add-modal.vue';
+import { getUserPoolListApi } from '@/api/user-pool';
+interface List {
+  id: number;
+  name: string;
+  totalUserCount: number;
+}
 
 export default defineComponent({
   components: {
@@ -51,8 +57,11 @@ export default defineComponent({
   setup() {
     const router = useRouter();
     // 跳转到应用
-    const toApplication = () => {
-      router.push('/application')
+    const toApplication = (id: number) => {
+      router.push({
+        name: 'application',
+        query: { id }
+      })
     }
 
     // 新增用户池
@@ -61,10 +70,28 @@ export default defineComponent({
       addModalRef.value.showModal()
     }
 
+    // 获取用户池数据
+    let list = ref<List[]>([]);
+    const getUserPoolList = async () => {
+      let res = {} as any
+      try {
+				res = await getUserPoolListApi().request();
+        list.value = res
+      } catch (error) {
+				console.log(error);
+			}
+    }
+
+    onMounted(async () => {
+      await getUserPoolList();
+    });
+
     return {
-      toApplication,
       addModalRef,
-      handleAdd
+      list,
+      toApplication,
+      handleAdd,
+      getUserPoolList,
     }
   },
 })
@@ -138,6 +165,7 @@ export default defineComponent({
       }
       .user-icon-box {
         display: flex;
+        
         .user-icon-item {
           width: 30px;
           height: 30px;
@@ -146,17 +174,19 @@ export default defineComponent({
           background-color: #f3f3f3;
           border-radius: 50px;
           .user-icon {
-            color: #c2c2c2;
             padding: 6px;
+            box-sizing: content-box;
+            color: #c2c2c2;
           }
         }
       }
     }
 
     .menu-icon{
+      margin-top: 13px;
+      box-sizing: content-box;
       font-size: 12px;
       color: #909399;
-      margin-top: 13px;
       border: 1px #909399 solid;
     }
   }

@@ -4,16 +4,19 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "build:sit": "vite build --mode sit",
+    "start": "vite preview"
   },
   "dependencies": {
+    "@vueuse/core": "^7.5.3",
     "axios": "^0.21.1",
     "element-plus": "^1.2.0-beta.6",
     "nprogress": "^0.2.0",
+    "pinia": "^2.0.9",
     "qs": "^6.10.1",
     "vue": "^3.2.25",
-    "vue-router": "^4.0.10",
-    "vuex": "^4.0.2"
+    "vue-clipboard3": "^1.0.1",
+    "vue-router": "^4.0.10"
   },
   "devDependencies": {
     "@types/node": "^16.11.6",

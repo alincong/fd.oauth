@@ -4,14 +4,14 @@
       <div class="org">
         <!-- 左侧区域 -->
         <div class="left-box">
-          <el-input placeholder="输入部门搜索" />
+          <el-input v-model="searchData" @change ="entClick" :suffix-icon="searchData ? '' : Search" clearable placeholder="输入部门搜索" />
           <div class="tree">
             <el-tree
               :data="treeData"
               :props="defaultProps"
               accordion
               node-key="id"
-              :default-expanded-keys="[expandNode.id]"
+              :default-expanded-keys="expandNode.id ? [expandNode.id] : []"
               @node-click="handleNodeClick"
             />
           </div>
@@ -20,7 +20,7 @@
         <!-- 右侧区域 -->
         <div class="right-box">
           <!-- 标题 -->
-          <div class="treeNode">{{ treeNode }}({{ total }}人)</div>
+          <div class="treeNode">{{ treeNode.treeName }}({{ pageProps.total }}人)</div>
           <!-- 表格 -->
           <el-table ref="formRef" :data="tableData" height="68vh">
             <el-table-column type="selection" width="55" />
@@ -29,12 +29,12 @@
           </el-table>
           <!-- 分页 -->
           <el-pagination
-            v-model:currentPage="currentPage"
-            :page-size="page"
+            v-model:page="pageProps.page"
+            :page-size="pageProps.perPage"
             layout="total, prev, pager, next, sizes, jumper"
-            :total="total"
-            @current-change="changePageSize('currentPage', $event)"
-            @size-change="changePageSize('page', $event)"
+            :total="pageProps.total"
+            @current-change="changePageSize('page', $event)"
+            @size-change="changePageSize('perPage', $event)"
             class="pagination"
           >
           </el-pagination>
@@ -46,10 +46,12 @@
 
 <script lang="ts">
 import { defineComponent, onMounted, reactive, ref, toRefs } from "vue";
+import { deptTreeData, deptUserList, deptSearch } from "@/api/user-manage-api";
+import { Search } from '@element-plus/icons-vue'
 
 interface ExpandNode {
   id: number;
-  label: string;
+  name: string;
 }
 interface TableData {
   username: string;
@@ -59,213 +61,110 @@ interface TableData {
 
 interface TreeData {
   id: number;
-  label: string;
+  name: string;
   [propname: string]: any;
 }
 
 export default defineComponent({
+  components:{ Search },
   setup() {
-    // -------------------树形数据-------------------
-    let treeData = reactive<TreeData[]>([
-      {
-        id: 1,
-        label: "Level one 1",
-        children: [
-          {
-            label: "Level two 1-1",
-            children: [
-              {
-                label: "Level three 1-1-1-1-1-1-1-1-1-1-1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-              {
-                label: "Level three 1-1-1",
-              },
-            ],
-          },
-        ],
-      },
-      {
-        id: 2,
-        label: "Level one 2",
-        children: [
-          {
-            label: "Level two 2-1",
-            children: [
-              {
-                label: "Level three 2-1-1",
-              },
-            ],
-          },
-          {
-            label: "Level two 2-2",
-            children: [
-              {
-                label: "Level three 2-2-1",
-              },
-            ],
-          },
-        ],
-      },
-      {
-        id: 3,
-        label: "Level one 3",
-        children: [
-          {
-            label: "Level two 3-1",
-            children: [
-              {
-                label: "Level three 3-1-1",
-              },
-            ],
-          },
-          {
-            label: "Level two 3-2",
-            children: [
-              {
-                label: "Level three 3-2-1",
-              },
-            ],
-          },
-        ],
-      },
-    ]);
+    // --------------------------------生命周期--------------------------------
+    onMounted(() => {
+      getTreeData()
+    })
+
+    // --------------------------------请求--------------------------------
+    const getTreeData = async() => {
+      try{
+        const res = await deptTreeData().request()
+        treeData.value = res
+        setExpandNode();
+      } catch(err) {}
+    }
+
+    const getTableData = async(treeId) => {
+      try{
+        let params = {
+          id: treeId, 
+          sort: 'sort', 
+          pageIndex: pageProps.value.page,
+          pageSize: pageProps.value.perPage
+        }
+        const res = await deptUserList(params).request()
+        tableData.value = res.list
+        pageProps.value.page = res.page
+        pageProps.value.perPage = res.perPage
+        pageProps.value.total = res.count  
+      } catch(err) {}
+    }
+
+    const searchDept = async(value) => {
+      try{
+        const res = await deptSearch({name: value}).request()
+        treeData.value = res
+        setExpandNode()
+      } catch(err) {}
+    }
+
+    // --------------------------------搜索区域--------------------------------
+    const searchData = ref()
+    const entClick = (value) => {
+      value ? searchDept(value) : getTreeData()
+    }
+
+    // --------------------------------树形数据--------------------------------
+    let treeData = ref<TreeData[]>([]);
     const defaultProps = reactive({
       children: "children",
-      label: "label",
+      label: "name",
     });
+
     let expandNode = reactive({}) as ExpandNode; //获取tree默认展开节点
-    const treeNode = ref(""); //获取选中的tree节点，主要渲染table上的title
+    let treeNode = ref({treeName: '', id: 0}); //获取选中的tree节点，主要渲染table上的title
+    // 树节点改变
     const handleNodeClick = (data) => {
-      treeNode.value = data.label;
+      treeNode.value.treeName = data.name;
+      treeNode.value.id = data.id
+      getTableData(data.id)
     };
     // 获取默认展开节点的数据
     const setExpandNode = () => {
-      treeData.find((value, index) => {
+      treeData.value.find((value, index) => {
         if (index === 0) {
           expandNode.id = value.id;
-          expandNode.label = value.label;
-          treeNode.value = value.label;
+          expandNode.name = value.name;
+          treeNode.value.treeName = value.name;
+          treeNode.value.id = value.id
+          getTableData(value.id)
         }
       });
     };
-    setExpandNode();
 
-    // 表格数据
-    let tableData = reactive<TableData[]>([
-      {
-        username: "林聪",
-        account: "FD-39365",
-      },
-      {
-        username: "林聪",
-        account: "FD-39365",
-      },
-      {
-        username: "林聪",
-        account: "FD-39365",
-      },
-      {
-        username: "林聪",
-        account: "FD-39365",
-      },
-      {
-        username: "林聪",
-        account: "FD-39365",
-      },
-      {
-        username: "林聪",
-        account: "FD-39365",
-      },
-      {
-        username: "林聪",
-        account: "FD-39365",
-      },
-      {
-        username: "林聪",
-        account: "FD-39365",
-      },
-      {
-        username: "林聪",
-        account: "FD-39365",
-      },
-    ]);
-    const pageProps = reactive({
-      currentPage: 1,
-      page: 10,
-      total: 100,
+    // --------------------------------表格数据--------------------------------
+    let tableData = ref<TableData[]>([]);
+    const pageProps = ref({
+      page: 1,
+      perPage: 10,
+      total: 0,
     });
     const changePageSize = (type, e) => {
-      // console.log(type, e);
-      pageProps[type] = e;
+      pageProps.value[type] = e;
+      getTableData(treeNode.value.id)
     };
 
     return {
+      searchData,
       treeData,
       treeNode,
       expandNode,
       defaultProps,
       tableData,
-      ...toRefs(pageProps),
+      pageProps,
+      Search,
 
       // 方法
       handleNodeClick,
+      entClick,
       changePageSize,
     };
   },

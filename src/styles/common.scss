@@ -1,3 +1,6 @@
+*, :after, :before {
+  box-sizing: border-box;
+}
 
 html, body {
   width: 100%;
@@ -19,7 +22,16 @@ a {
 	cursor: pointer;
 	transition: color .3s;
 }
-
+ul li{
+	list-style: none;
+}
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
 
 /* 滚动条凹槽的颜色，还可以设置边框属性 */
 *::-webkit-scrollbar-track-piece {
@@ -63,5 +75,16 @@ a {
 .main-leave-to {
   opacity: 0%;
   margin-left: 20px;
+}
+
+.el-drawer__header {
+	margin-bottom: 0;
+	padding: 16px 24px;
+	color: rgba(0,0,0,.85);
+	border-bottom: 1px solid #f0f0f0;
+}
+.el-drawer__body {
+	overflow: auto;
+	margin-bottom: 60px;
 }
 

@@ -1,5 +1,11 @@
-import { ElNotification, NotificationParamsTyped } from 'element-plus'
+import { ElNotification } from 'element-plus'
+import { useRouter } from 'vue-router'
+import { removeLocalStorage } from '@/utils/storage'
 
+// 路由对象
+const router = useRouter()
+
+// 通知持续时长
 const duration = 1500
 
 /**
@@ -43,4 +49,17 @@ export const httpErrorCode = {
   500: '服务器错误，请联系管理员',
   503: '服务器过载或正在维护',
   504: '网关超时',
+}
+
+/**
+ * @description 后端返回系统错误通知
+ * 
+ */
+export function systemErrorNotice(code: number, msg: string) {
+  errorNotice(msg)
+  if (code === 41005) {
+    // token 失效
+    removeLocalStorage('token') && router.replace('/login')
+  }
+  return true
 }

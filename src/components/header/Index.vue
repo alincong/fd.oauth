@@ -64,7 +64,7 @@
             <el-dropdown-menu style="width: 120px;">
               <el-dropdown-item>个人中心</el-dropdown-item>
               <el-dropdown-item>反馈处理</el-dropdown-item>
-              <el-dropdown-item>退出</el-dropdown-item>
+              <el-dropdown-item @click="handleLogout">退出</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -99,7 +99,7 @@
           <template #dropdown>
             <el-dropdown-menu style="width: 120px;">
               <el-dropdown-item>个人中心</el-dropdown-item>
-              <el-dropdown-item>退出登录</el-dropdown-item>
+              <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -140,6 +140,12 @@ const trigger = 'click'
 // 单击logo
 const handleToUserPool = () => {
   router.push('/userpool')
+}
+
+// 退出
+const handleLogout = () => {
+  window.localStorage.removeItem('token')
+  router.push('/login')
 }
 
 </script>
